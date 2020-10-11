@@ -1,7 +1,9 @@
-import React from "react"
-import "twin.macro"
+import React, {useState} from "react"
+import tw, { css } from "twin.macro"
 import ReactPlayer from "react-player/lazy"
-import Carousel from "react-multi-carousel"
+import "slick-carousel/slick/slick.css"
+import "slick-carousel/slick/slick-theme.css"
+import Slider from "react-slick"
 
 const getVideo = resources => {
   if (!resources) {
@@ -17,7 +19,7 @@ const getVideo = resources => {
 
 const renders = {
   video: video => (
-    <ReactPlayer tw="max-w-full" url={video.url} width="100%" controls="true" />
+    <ReactPlayer tw="max-w-full" url={video.url} width="100%" controls={true} />
   ),
   image: image => (
     <a href={image.url} tw="w-full text-center">
@@ -45,27 +47,12 @@ const MainMedia = ({ tool }) => {
     items.push({ type: "video", source: video })
   }
 
-  const carouselProps = {
-    responsive: {
-      all: {
-        breakpoint: { max: 3000, min: 0 },
-        items: 1,
-      },
-    },
-    infinite: true,
-    showDots: true,
-  }
-
   return (
     <div tw="mb-5">
       {items.length > 1 ? (
-        <Carousel {...carouselProps}>
-          {items.map(item => (
-            <div tw="flex justify-center items-center h-full mb-5 pb-4">
-              {renders[item.type](item.source)}
-            </div>
-          ))}
-        </Carousel>
+        <div tw="items-center h-full pr-4 pl-4">
+          <MediaElement data={items} />
+        </div>
       ) : (
         <div tw="flex justify-center items-center h-full mb-5 pb-4">
           {renders[items[0].type](items[0].source)}
@@ -75,4 +62,131 @@ const MainMedia = ({ tool }) => {
   )
 }
 
+const imageStyles = css`
+    height: inherit;  
+    margin-left: auto;  
+    margin-right: auto;  
+  `
+const sliderStyles = css`
+    .slick-prev:before,
+    .slick-next:before {
+      color: #222425!important;
+    }
+    .slick-slide {
+      padding: 0rem 1rem 0rem 1rem;
+    }
+  `
+const sliderContentStyle = css`
+    margin: 1rem 0rem 1rem 0.1rem;
+    transition: transform .2s;
+    height: 8rem;
+    background: #f7f7f7;
+    text-align: center;
+    cursor: pointer;
+
+    &:hover {
+      -ms-transform: scale(1.005);
+      -webkit-transform: scale(1.005);
+      transform: scale(1.005);
+    }
+  `  
+// TODO : get Thumbnail Url for vimeo videos  
+const getThumbnailUrl = url => {
+  if (url.includes("youtube.com")) {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    const videoId = match && match[7].length === 11? match[7] : false;
+    return videoId ? "https://img.youtube.com/vi/" + videoId + "/default.jpg" : "#"
+  }
+}
+
+//TODO : refactor render Slider Elements
+const renderSliderElements = {
+  video: (video, data) => {
+    return (
+      <div css={[sliderContentStyle]} 
+      id={data.key}
+      key={data.key}
+      onClick={data.onClick}>
+        <img 
+        alt={`Thumbnail`}
+        src={getThumbnailUrl(video.url)}
+        css={[
+          tw`border-4 max-w-full`,
+          imageStyles
+        ]}
+        />
+      </div>
+    )
+  },
+  image: (image, data) => {
+    
+    return (
+      <div css={[sliderContentStyle]} 
+      id={data.key}
+      key={data.key}
+      onClick={data.onClick}>
+        <img 
+        alt={`Screenshot of ${image.name} website`}
+        src={image.src}
+        css={[
+          tw`border-4 max-w-full`,
+          imageStyles
+        ]}
+        />
+      </div>
+    )
+    
+  }
+}
+const MediaElement = ({data}) => {
+  const [items] = useState(data);
+  const [index, setIndex] = useState(0);
+  const maxSlidesToShow = items.length < 3 ? 2 : 3;
+  const settings = {
+    focusOnSelect: true,
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: maxSlidesToShow,
+    slidesToScroll: 1,
+    responsive: [{
+        breakpoint: 1200,
+        settings: {
+          slidesToShow: maxSlidesToShow,
+          slidesToScroll: 1
+        }
+      }, {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1
+        }
+      }, {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1
+        }
+      }
+    ]
+  }
+  // TODO : create a onclick function which will hide and show rendered elements based on index
+  return (
+    <>
+      <div tw="flex justify-center items-center h-full mb-1 pb-4">
+        {renders[items[index].type](items[index].source)}
+      </div>
+      <Slider {...settings} css={[sliderStyles]}>
+        {items.map((item, itemIndex) => {
+          item.key = itemIndex + '-media-element' 
+          item.onClick = () =>{ setIndex(itemIndex);  }
+          return (
+            renderSliderElements[item.type](item.source, item)
+          )
+        })}
+      </Slider>
+    </>
+  )
+}
 export default MainMedia
