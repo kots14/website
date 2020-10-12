@@ -83,11 +83,19 @@ const sliderContentStyle = css`
     background: #f7f7f7;
     text-align: center;
     cursor: pointer;
+    border-radius: 0.5rem;
 
     &:hover {
       -ms-transform: scale(1.005);
       -webkit-transform: scale(1.005);
       transform: scale(1.005);
+    }
+
+    &:focus {
+      outline: none;
+      -webkit-box-shadow: 0px 0px 4px 0px rgba(173,173,173,1);
+      -moz-box-shadow: 0px 0px 4px 0px rgba(173,173,173,1);
+      box-shadow: 0px 0px 4px 0px rgba(173,173,173,1);
     }
   `  
 // TODO : get Thumbnail Url for vimeo videos  
@@ -102,12 +110,12 @@ const getThumbnailUrl = url => {
 
 //TODO : refactor render Slider Elements
 const renderSliderElements = {
-  video: (video, data) => {
+  video: video => {
     return (
       <div css={[sliderContentStyle]} 
-      id={data.key}
-      key={data.key}
-      onClick={data.onClick}>
+      id={video.key}
+      key={video.key}
+      onClick={video.onClick}>
         <img 
         alt={`Thumbnail`}
         src={getThumbnailUrl(video.url)}
@@ -119,13 +127,13 @@ const renderSliderElements = {
       </div>
     )
   },
-  image: (image, data) => {
+  image: image => {
     
     return (
       <div css={[sliderContentStyle]} 
-      id={data.key}
-      key={data.key}
-      onClick={data.onClick}>
+      id={image.key}
+      key={image.key}
+      onClick={image.onClick}>
         <img 
         alt={`Screenshot of ${image.name} website`}
         src={image.src}
@@ -179,10 +187,10 @@ const MediaElement = ({data}) => {
       </div>
       <Slider {...settings} css={[sliderStyles]}>
         {items.map((item, itemIndex) => {
-          item.key = itemIndex + '-media-element' 
-          item.onClick = () =>{ setIndex(itemIndex);  }
+          item.source.key = 'media_element_' + itemIndex 
+          item.source.onClick = () =>{ setIndex(itemIndex);  }
           return (
-            renderSliderElements[item.type](item.source, item)
+            renderSliderElements[item.type](item.source)
           )
         })}
       </Slider>
