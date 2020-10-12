@@ -19,10 +19,11 @@ const getVideo = resources => {
 
 const renders = {
   video: video => (
-    <ReactPlayer tw="max-w-full" url={video.url} width="100%" controls={true} />
+    <ReactPlayer tw="max-w-full" url={video.url} width="100%" controls={true} 
+    key={video.key} id={video.key} css={video.css}/>
   ),
   image: image => (
-    <a href={image.url} tw="w-full text-center">
+    <a href={image.url} tw="w-full text-center" css={image.css} key={image.key} id={image.key}>
       <img
         alt={`Screenshot of ${image.name} website`}
         tw="border-4 max-w-full inline-block"
@@ -49,15 +50,7 @@ const MainMedia = ({ tool }) => {
 
   return (
     <div tw="mb-5">
-      {items.length > 1 ? (
-        <div tw="items-center h-full pr-4 pl-4">
-          <MediaElement data={items} />
-        </div>
-      ) : (
-        <div tw="flex justify-center items-center h-full mb-5 pb-4">
-          {renders[items[0].type](items[0].source)}
-        </div>
-      )}
+      <MediaElement data={items} />
     </div>
   )
 }
@@ -180,21 +173,34 @@ const MediaElement = ({data}) => {
     ]
   }
   // TODO : create a onclick function which will hide and show rendered elements based on index
-  return (
-    <>
+  return items.length > 1 ? (
+    <div tw="items-center h-full pr-4 pl-4">
       <div tw="flex justify-center items-center h-full mb-1 pb-4">
-        {renders[items[index].type](items[index].source)}
+        {items.map((item, itemIndex) => {
+          item.source.key = "media_element_infocus_" + itemIndex
+          item.source.css = css`display:none`
+          return (
+            renders[item.type](item.source)
+          )
+        })}
       </div>
       <Slider {...settings} css={[sliderStyles]}>
         {items.map((item, itemIndex) => {
-          item.source.key = 'media_element_' + itemIndex 
+          item.source.key = "media_element_" + itemIndex 
           item.source.onClick = () =>{ setIndex(itemIndex);  }
           return (
             renderSliderElements[item.type](item.source)
           )
         })}
       </Slider>
-    </>
+    </div>
+  ) : (
+    <div tw="flex justify-center items-center h-full mb-5 pb-4">
+      {items.map(item => {
+        item.source.key = "media_element_infocus_0"
+        return renders[item.type](item.source)
+      })}
+    </div>
   )
 }
 export default MainMedia
