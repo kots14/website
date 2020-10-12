@@ -17,7 +17,7 @@ const getVideo = resources => {
   }
 }
 
-const renders = {
+const renderMainMediaDisplayComponent = {
   video: video => (
     <div key={video.key} id={video.key} css={video.css}>
       <ReactPlayer url={video.url} width="100%" controls={true}  />
@@ -33,27 +33,6 @@ const renders = {
       />
     </a>
   ),
-}
-
-const MainMedia = ({ tool }) => {
-  const { name, homepage, resources } = tool
-  let screenshot = { name, url: homepage, src: tool.fields.screenshot }
-  let video = getVideo(resources)
-  const items = []
-
-  if (screenshot) {
-    items.push({ type: "image", source: screenshot })
-  }
-
-  if (video) {
-    items.push({ type: "video", source: video })
-  }
-
-  return (
-    <div tw="mb-5">
-      <MediaElement data={items} />
-    </div>
-  )
 }
 
 const imageStyles = css`
@@ -102,8 +81,7 @@ const getThumbnailUrl = url => {
   }
 }
 
-//TODO : refactor render Slider Elements
-const renderSliderElements = {
+const renderMainMediaSliderElements = {
   video: video => {
     return (
       <div css={[sliderContentStyle]} 
@@ -141,7 +119,7 @@ const renderSliderElements = {
     
   }
 }
-const MediaElement = ({data}) => {
+const MainMediaUtil = ({data}) => {
   const [items] = useState(data);
   const [index, setIndex] = useState(0);
   const maxSlidesToShow = items.length < 3 ? 2 : 3;
@@ -185,17 +163,16 @@ const MediaElement = ({data}) => {
   }
 
   useEffect(() => {
-    toggleDisplayStatusOfElement()
+    if(items.length > 1) toggleDisplayStatusOfElement()
   })
-  // TODO : create a onclick function which will hide and show rendered elements based on index
+  
   return items.length > 1 ? (
-    
     <>
       <div tw="items-center h-full mb-1">
         {items.map((item, itemIndex) => {
           item.source.key = "media_element_infocus_" + itemIndex
           item.source.css = css`display:none;`
-          return renders[item.type](item.source)
+          return renderMainMediaDisplayComponent[item.type](item.source)
         })}
       </div>
       <div tw="items-center h-full pr-5">
@@ -207,7 +184,7 @@ const MediaElement = ({data}) => {
               toggleDisplayStatusOfElement({style : 'display:none' })
               setIndex(itemIndex) 
             }
-            return renderSliderElements[item.type](item.source)
+            return renderMainMediaSliderElements[item.type](item.source)
           })}
         </Slider>
       </div>
@@ -216,9 +193,31 @@ const MediaElement = ({data}) => {
     <div tw="flex justify-center items-center h-full mb-5 pb-4">
       {items.map(item => {
         item.source.key = "media_element_infocus_0"
-        return renders[item.type](item.source)
+        return renderMainMediaDisplayComponent[item.type](item.source)
       })}
     </div>
   )
 }
+
+const MainMedia = ({ tool }) => {
+  const { name, homepage, resources } = tool
+  let screenshot = { name, url: homepage, src: tool.fields.screenshot }
+  let video = getVideo(resources)
+  const items = []
+
+  if (screenshot) {
+    items.push({ type: "image", source: screenshot })
+  }
+
+  if (video) {
+    items.push({ type: "video", source: video })
+  }
+
+  return (
+    <div tw="mb-5">
+      <MainMediaUtil data={items} />
+    </div>
+  )
+}
+
 export default MainMedia
