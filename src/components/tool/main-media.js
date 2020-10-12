@@ -1,4 +1,4 @@
-import React, {useState} from "react"
+import React, {useState, useEffect} from "react"
 import tw, { css } from "twin.macro"
 import ReactPlayer from "react-player/lazy"
 import "slick-carousel/slick/slick.css"
@@ -19,16 +19,17 @@ const getVideo = resources => {
 
 const renders = {
   video: video => (
-    <ReactPlayer tw="max-w-full" url={video.url} width="100%" controls={true} 
-    key={video.key} id={video.key} css={video.css}/>
+    <div key={video.key} id={video.key} css={video.css}>
+      <ReactPlayer url={video.url} width="100%" controls={true}  />
+    </div>
   ),
   image: image => (
-    <a href={image.url} tw="w-full text-center" css={image.css} key={image.key} id={image.key}>
+    <a href={image.url} tw="w-full text-center" css={image.css}
+    key={image.key} id={image.key}>
       <img
         alt={`Screenshot of ${image.name} website`}
         tw="border-4 max-w-full inline-block"
         src={image.src}
-        height="360"
       />
     </a>
   ),
@@ -172,28 +173,45 @@ const MediaElement = ({data}) => {
       }
     ]
   }
+
+  const toggleDisplayStatusOfElement = options => {
+    options = options || {}
+    const idForElementToDisplay = "#media_element_infocus_" + index
+    const idForElementToFocus = "#media_element_" + index
+    const elementToDisplay = document.querySelector(idForElementToDisplay)
+    const elementToFocus = document.querySelector(idForElementToFocus)
+    elementToDisplay.setAttribute('style', options.style || 'display:block')
+    elementToFocus.focus()
+  }
+
+  useEffect(() => {
+    toggleDisplayStatusOfElement()
+  })
   // TODO : create a onclick function which will hide and show rendered elements based on index
   return items.length > 1 ? (
-    <div tw="items-center h-full pr-4 pl-4">
-      <div tw="flex justify-center items-center h-full mb-1 pb-4">
+    
+    <>
+      <div tw="items-center h-full mb-1">
         {items.map((item, itemIndex) => {
           item.source.key = "media_element_infocus_" + itemIndex
-          item.source.css = css`display:none`
-          return (
-            renders[item.type](item.source)
-          )
+          item.source.css = css`display:none;`
+          return renders[item.type](item.source)
         })}
       </div>
-      <Slider {...settings} css={[sliderStyles]}>
-        {items.map((item, itemIndex) => {
-          item.source.key = "media_element_" + itemIndex 
-          item.source.onClick = () =>{ setIndex(itemIndex);  }
-          return (
-            renderSliderElements[item.type](item.source)
-          )
-        })}
-      </Slider>
-    </div>
+      <div tw="items-center h-full pr-5">
+        <Slider {...settings} css={[sliderStyles]}>
+          {items.map((item, itemIndex) => {
+            item.source.key = "media_element_" + itemIndex 
+            item.source.onClick = () => { 
+              if (itemIndex === index) return
+              toggleDisplayStatusOfElement({style : 'display:none' })
+              setIndex(itemIndex) 
+            }
+            return renderSliderElements[item.type](item.source)
+          })}
+        </Slider>
+      </div>
+    </>
   ) : (
     <div tw="flex justify-center items-center h-full mb-5 pb-4">
       {items.map(item => {
