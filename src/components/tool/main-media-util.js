@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react"
+import React, { useState, useEffect } from "react"
 import tw, { css } from "twin.macro"
 import ReactPlayer from "react-player/lazy"
 import "slick-carousel/slick/slick.css"
@@ -78,11 +78,12 @@ const sliderThumbnail = props => {
     </div>
   )
 }
+
 export const MainMediaUtil = ({data}) => {
   const [items] = useState(data)
   const [index, setIndex] = useState(0)
   const [isRendered, setIsRendered] = useState(false)
-  const [areThumbnailsRendered, setAreThumbnailsRendered] = useState(false)
+  const [hasThumbnails, setHasThumbnails] = useState(false)
   const sliderSetting = getSliderSetting(items.length)
 
   const toggleDisplayStatusOfElement = options => {
@@ -105,15 +106,15 @@ export const MainMediaUtil = ({data}) => {
       const target = document.querySelector("#" + item.source.key + "_img")
       target.setAttribute("src", url)
     })
-    setAreThumbnailsRendered(true)
+    setHasThumbnails(true)
   }
 
   useEffect(() => {
     if (items.length > 1) toggleDisplayStatusOfElement()
-    if (!areThumbnailsRendered) populateVideoThumbnails()
+    if (!hasThumbnails) populateVideoThumbnails()
   })
   
-  return items.length > 1 ? (
+  return items && items.length > 1 ? (
     <>
       <div tw="items-center h-full mb-1">
         {items.map((item, itemIndex) => {
@@ -138,7 +139,7 @@ export const MainMediaUtil = ({data}) => {
     </>
   ) : (
     <div tw="flex justify-center items-center h-full mb-5 pb-4">
-      {items.map(item => {
+      {items && items.map(item => {
         item.source.key = "main_media_util_in_display_0"
         return renderMainMediaDisplayElement[item.type](item.source)
       })}
