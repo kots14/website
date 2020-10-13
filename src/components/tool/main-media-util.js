@@ -52,73 +52,50 @@ const renderMainMediaDisplayElement = {
 }
 
 const renderMainMediaSliderElement = {
-  video: video => {
-    const src = video.thumbnailSrc || "#"
-    return (
-      <div css={[SliderContentStyle]} 
-      id={video.key}
-      key={video.key}
-      onClick={video.onClick}>
-        <img 
-        alt={`Thumbnail`}
-        src={src}
-        id={video.key + "_img"}
-        css={[
-          tw`border-4 max-w-full`,
-          SliderContentImageStyle
-        ]}
-        />
-      </div>
-    )
-  },
-  image: image => {
-    
-    return (
-      <div css={[SliderContentStyle]} 
-      id={image.key}
-      key={image.key}
-      onClick={image.onClick}>
-        <img 
-        alt={`Screenshot of ${image.name} website`}
-        src={image.src}
-        css={[
-          tw`border-4 max-w-full`,
-          SliderContentImageStyle
-        ]}
-        />
-      </div>
-    )
-    
-  }
+  video: video => sliderThumbnail(video),
+  image: image => sliderThumbnail(image)
 }
 
-const WrappedImage = props => (
-  <div css={props.divCSS} 
-  id={props.key}
-  key={props.key}
-  onClick={props.onClick}>
-    <img 
-    alt={props.alt}
-    id={props.imgId}
-    src={props.src}
-    css={props.imgCSS}
-    />
-  </div>
-)
+const sliderThumbnail = props => {
+  props = props || {}
+  const src = props.src || props.thumbnailSrc || "#"
+  const alt = props.name || "Thumbnail"
+  return (
+    <div css={[SliderContentStyle]} 
+    id={props.key}
+    key={props.key}
+    onClick={props.onClick}>
+      <img 
+      alt={alt}
+      id={props.key + "_img"}
+      key={props.key + "_img"}
+      src={src}
+      css={[
+        tw`border-4 max-w-full`,
+        SliderContentImageStyle
+      ]}
+      />
+    </div>
+  )
+}
 export const MainMediaUtil = ({data}) => {
   const [items] = useState(data)
   const [index, setIndex] = useState(0)
+  const [isRendered, setIsRendered] = useState(false)
   const [areThumbnailsRendered, setAreThumbnailsRendered] = useState(false)
   const sliderSetting = getSliderSetting(items.length)
 
   const toggleDisplayStatusOfElement = options => {
     options = options || {}
     const idForElementToDisplay = "#main_media_util_in_display_" + index
-    const idForElementToFocus = "#main_media_util_" + index
     const elementToDisplay = document.querySelector(idForElementToDisplay)
-    const elementToFocus = document.querySelector(idForElementToFocus)
     elementToDisplay.setAttribute('style', options.style || 'display:block')
-    elementToFocus.focus()
+
+    if (isRendered) return
+    const idForElementToFocus = "#main_media_util_" + index
+    const elementToFocus = document.querySelector(idForElementToFocus)
+    elementToFocus.focus({ preventScroll: true })
+    setIsRendered(true)
   }
 
   const populateVideoThumbnails = async () => {
@@ -128,7 +105,6 @@ export const MainMediaUtil = ({data}) => {
       const target = document.querySelector("#" + item.source.key + "_img")
       target.setAttribute("src", url)
     })
-    
     setAreThumbnailsRendered(true)
   }
 
