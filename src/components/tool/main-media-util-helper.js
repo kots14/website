@@ -66,3 +66,22 @@ export const getSliderSetting = noOfElements => {
     ]
   }
 }
+
+/**
+ * 
+ * **Credits**  
+ *    Author : yangshun
+ *    Gist link : https://gist.github.com/yangshun/9892961
+ */
+export const parseVideo = url => {
+  url.match(/(http:|https:|)\/\/(player.|www.)?(vimeo\.com|youtu(be\.com|\.be|be\.googleapis\.com))\/(video\/|embed\/|watch\?v=|v\/)?([A-Za-z0-9._%-]*)(\&\S+)?/);
+
+  const type = RegExp.$3.indexOf("youtu") > -1 ? "youtube" :
+              RegExp.$3.indexOf("vimeo") > -1 ? "vimeo" 
+              : undefined
+
+  return {
+    type: type,
+    id: RegExp.$6
+  }
+}

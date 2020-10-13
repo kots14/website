@@ -8,15 +8,37 @@ import {
   SliderContentImageStyle, 
   SliderStyle, 
   SliderContentStyle,
-  getSliderSetting
-} from "./main-media-util-settings"
+  getSliderSetting,
+  parseVideo
+} from "./main-media-util-helper"
 
-const renderMainMediaDisplayComponent = {
-  video: video => (
-    <div key={video.key} id={video.key} css={video.css}>
-      <ReactPlayer url={video.url} width="100%" controls={true}  />
-    </div>
-  ),
+const getVideoThumbnailUrl = async url => {
+  const video = parseVideo(url)
+  if (video.type === "youtube")
+    return video.id ? "https://img.youtube.com/vi/" + video.id + "/maxresdefault.jpg" : "#"
+  if (video.type === "vimeo") {
+    const fetched = (async videoId => {
+      let result = {}
+      try {
+        const response = await fetch("https://vimeo.com/api/v2/video/" + videoId + ".json")
+        result = await response.json()
+        return result[0].thumbnail_large
+      } catch (e) {
+        console.error("Error while fetching Vimeo video data", e)
+      }
+    })
+    return fetched(video.id)
+  }
+}
+
+const renderMainMediaDisplayElement = {
+  video: video => {
+    return (
+      <div tw="h-full text-center" key={video.key} id={video.key} css={video.css}>
+        <ReactPlayer url={video.url} width="100%" controls={true}/>
+      </div>
+    )
+  },
   image: image => (
     <a href={image.url} tw="w-full text-center" css={image.css}
     key={image.key} id={image.key}>
@@ -29,17 +51,9 @@ const renderMainMediaDisplayComponent = {
   ),
 }
 
-const getThumbnailUrl = url => {
-  if (url.includes("youtube.com")) {
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    const videoId = match && match[7].length === 11? match[7] : false;
-    return videoId ? "https://img.youtube.com/vi/" + videoId + "/default.jpg" : "#"
-  }
-}
-
-const renderMainMediaSliderElements = {
+const renderMainMediaSliderElement = {
   video: video => {
+    const src = video.thumbnailSrc || "#"
     return (
       <div css={[SliderContentStyle]} 
       id={video.key}
@@ -47,7 +61,8 @@ const renderMainMediaSliderElements = {
       onClick={video.onClick}>
         <img 
         alt={`Thumbnail`}
-        src={getThumbnailUrl(video.url)}
+        src={src}
+        id={video.key + "_img"}
         css={[
           tw`border-4 max-w-full`,
           SliderContentImageStyle
@@ -77,9 +92,23 @@ const renderMainMediaSliderElements = {
   }
 }
 
+const WrappedImage = props => (
+  <div css={props.divCSS} 
+  id={props.key}
+  key={props.key}
+  onClick={props.onClick}>
+    <img 
+    alt={props.alt}
+    id={props.imgId}
+    src={props.src}
+    css={props.imgCSS}
+    />
+  </div>
+)
 export const MainMediaUtil = ({data}) => {
-  const [items] = useState(data);
-  const [index, setIndex] = useState(0);
+  const [items] = useState(data)
+  const [index, setIndex] = useState(0)
+  const [areThumbnailsRendered, setAreThumbnailsRendered] = useState(false)
   const sliderSetting = getSliderSetting(items.length)
 
   const toggleDisplayStatusOfElement = options => {
@@ -92,8 +121,20 @@ export const MainMediaUtil = ({data}) => {
     elementToFocus.focus()
   }
 
+  const populateVideoThumbnails = async () => {
+    items.map(async item => {
+      if (item.type !== "video") return
+      const url = await getVideoThumbnailUrl(item.source.url)
+      const target = document.querySelector("#" + item.source.key + "_img")
+      target.setAttribute("src", url)
+    })
+    
+    setAreThumbnailsRendered(true)
+  }
+
   useEffect(() => {
     if (items.length > 1) toggleDisplayStatusOfElement()
+    if (!areThumbnailsRendered) populateVideoThumbnails()
   })
   
   return items.length > 1 ? (
@@ -102,10 +143,10 @@ export const MainMediaUtil = ({data}) => {
         {items.map((item, itemIndex) => {
           item.source.key = "main_media_util_in_display_" + itemIndex
           item.source.css = css`display:none;`
-          return renderMainMediaDisplayComponent[item.type](item.source)
+          return renderMainMediaDisplayElement[item.type](item.source)
         })}
       </div>
-      <div tw="items-center h-full pr-5">
+      <div tw="items-center h-full ml-2 mr-2">
         <Slider {...sliderSetting} css={[SliderStyle]}>
           {items.map((item, itemIndex) => {
             item.source.key = "main_media_util_" + itemIndex 
@@ -114,7 +155,7 @@ export const MainMediaUtil = ({data}) => {
               toggleDisplayStatusOfElement({style : 'display:none' })
               setIndex(itemIndex) 
             }
-            return renderMainMediaSliderElements[item.type](item.source)
+            return renderMainMediaSliderElement[item.type](item.source)
           })}
         </Slider>
       </div>
@@ -123,7 +164,7 @@ export const MainMediaUtil = ({data}) => {
     <div tw="flex justify-center items-center h-full mb-5 pb-4">
       {items.map(item => {
         item.source.key = "main_media_util_in_display_0"
-        return renderMainMediaDisplayComponent[item.type](item.source)
+        return renderMainMediaDisplayElement[item.type](item.source)
       })}
     </div>
   )

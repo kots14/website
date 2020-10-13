@@ -1,4 +1,5 @@
 import React from "react"
+import "twin.macro"
 import { MainMediaUtil } from "./main-media-util"
 
 const getVideo = resources => {
